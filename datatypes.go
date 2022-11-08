@@ -1,18 +1,26 @@
 package main
 
-type Ecosystem [][]*Unit // is a 2D array of Unit
+// 2D array of Unit objects
+type Ecosystem [][]*Unit
 
+// Each unit has food, predator, and/or prey. Note: food is static, and will never move so it's not a pointer, but predator and prey move between Unit objects in the Ecosystem, so they are pointers.
 type Unit struct {
-	food     bool
+	food     Food
 	predator *Predator
 	prey     *Prey
 }
 
+type Food struct {
+	isPresent      bool
+	lastGenUpdated int // if newly made, gets set to current generation. if eaten, gets set to -1. if this is not the current generation, then the Prey can eat it (because it wasn't made during the current generation).
+}
+
 type Organism struct {
-	// we don't need location OrderedPair because we are using an [][]Cell
-	energy int
-	age    int
-	genome [8]Gene
+	// we don't need location OrderedPair because we are using an [][]Unit
+	energy         int
+	age            int
+	genome         [8]Gene
+	lastGenUpdated int // gets updated to current generation after the organism has moved (so it doesn't move twice when updating for the next generation)
 }
 
 type Gene float64 // with range 0 to 1. all the genes of a genome add up to 1
