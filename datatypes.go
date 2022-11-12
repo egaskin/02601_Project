@@ -11,8 +11,8 @@ type Unit struct {
 }
 
 type Food struct {
-	isPresent      bool
-	lastGenUpdated int // if newly made, gets set to current generation. if eaten, gets set to -1. if this is not the current generation, then the Prey can eat it (because it wasn't made during the current generation).
+	isPresent bool
+	// lastGenUpdated int // if newly made, gets set to current generation. if eaten, gets set to -1. if this is not the current generation, then the Prey can eat it (because it wasn't made during the current generation).
 }
 
 type Organism struct {
