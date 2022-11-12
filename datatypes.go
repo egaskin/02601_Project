@@ -21,6 +21,7 @@ type Organism struct {
 	age            int
 	genome         [8]Gene
 	lastGenUpdated int // gets updated to current generation after the organism has moved (so it doesn't move twice when updating for the next generation)
+	lastDirection  int // a number between 0 and 7, corresponding to which gene was chosen for the last movement
 }
 
 type Gene float64 // with range 0 to 1. all the genes of a genome add up to 1
