@@ -3,19 +3,18 @@ package main
 import "math/rand"
 
 //UpdateAge takes in a pointer to a prey object, updates it age by incrementing it by one and then returns it.
-func UpdateAge(p *Prey) *Prey {
+func UpdateAge(p *Prey) {
 	p.Organism.age += 1
-	return p
 }
 
 func Reproduce(p *Prey) *Prey {
-	//This function will only be called if the energy and requirements are met. Check these requirements before calling this function.
+	//This function will only be called if the age and energy and requirements are met. Check these requirements before calling this function.
 	var child Prey
 	p.Organism.age = 0
 	child.Organism.energy = p.Organism.energy / 2
 	p.Organism.energy /= 2
-	UpdateDirection(&p.Organism, &child.Organism)
 	child.Organism.genome = p.Organism.genome // Check if the array needs to be copied manually.
+	UpdateDirection(&p.Organism, &child.Organism)
 	UpdateGenome(&child.Organism)
 	return &child
 }
@@ -44,7 +43,7 @@ func UpdateGenome(currentOrganism *Organism) {
 	for i := range currentOrganism.genome {
 		if i != currentDirection {
 			if currentOrganism.genome[i]-Gene(delta)*currentOrganism.genome[currentDirection] > 0 {
-				currentOrganism.genome[i] -= Gene(delta) * currentOrganism.genome[currentDirection]
+				currentOrganism.genome[i] -= Gene(delta) * currentOrganism.genome[currentDirection] / 7.0
 			}
 		}
 	}
