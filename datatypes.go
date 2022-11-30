@@ -3,6 +3,11 @@ package main
 // 2D array of Unit objects
 type Ecosystem [][]*Unit
 
+// OrderedPair
+type OrderedPair struct {
+	row, col int
+}
+
 // Each unit has food, predator, and/or prey. Note: food is static, and will never move so it's not a pointer, but predator and prey move between Unit objects in the Ecosystem, so they are pointers.
 type Unit struct {
 	food     Food

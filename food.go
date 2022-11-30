@@ -15,9 +15,9 @@ func (someUnit *Unit) GeneratePreyFoodProbabilistically(foodRule string, row, co
 	numRows := someEcosystem.CountRows()
 	numCols := someEcosystem.CountCols()
 
-	if foodRule == "eden" {
+	if foodRule == "gardenOfEden" {
 		someUnit.GenerateEden(row, col, numRows, numCols, generator)
-	} else if foodRule == "random" {
+	} else if foodRule == "even" {
 		// someUnit.GenerateRandom(row, col, numRows, numCols, generator)
 	} else if foodRule == "lineRunner" {
 		// someUnit.GenerateLineRunner(row, col, numRows, numCols, generator)
@@ -39,8 +39,8 @@ func (someUnit *Unit) GenerateEden(row, col, numRows, numCols int, generator *ra
 	and the below parameters means the eden rectangle will have
 	area = (l/fractionOfBoard)* (w/fractionOfBoard)*/
 	fractionOfBoard := 10
-	halfCenterRecLength := numCols / (fractionOfBoard * 2)
-	halfCenterRecWidth := numRows / (fractionOfBoard * 2)
+	halfCenterRecLength := numCols / (fractionOfBoard)
+	halfCenterRecWidth := numRows / (fractionOfBoard)
 
 	// generate a random floating point value on half open interval [0,1), with the unique generator
 	probability := generator.Float64() // this is instead of rand.Float64() accessing the global random PRNG object
@@ -48,12 +48,12 @@ func (someUnit *Unit) GenerateEden(row, col, numRows, numCols int, generator *ra
 	// check if the row and col of the current unit is within the center rectangle
 	if CheckIsInCenter(row, col, centerRow, centerCol, halfCenterRecLength, halfCenterRecWidth) {
 		// if within the center rectangle then much higher likelihood of generating food
-		if probability >= 0.99 {
+		if probability >= 0.90 {
 			someUnit.food.isPresent = true
 		}
 	} else {
 		// if not within the center rectangle then much less likely to generate food
-		if probability >= 0.99999 {
+		if probability >= 0.99 {
 			someUnit.food.isPresent = true
 		}
 	}

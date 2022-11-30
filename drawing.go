@@ -59,19 +59,19 @@ func (eco *Ecosystem) DrawToCanvas(canvasWidth int, scalingFactor float64) image
 	c.Fill()
 
 	// colors for each unit type
-	var food_red uint8 = 0
-	var food_green uint8 = 255
+	var food_red uint8 = 255
+	var food_green uint8 = 0
 	var food_blue uint8 = 0
 	foodColor := canvas.MakeColor(food_red, food_green, food_blue)
 
 	// var prey_red uint8 = 0
-	// var prey_green uint8 = 0
-	// var prey_blue uint8 = 255
+	// var prey_green uint8 = 255
+	// var prey_blue uint8 = 0
 	// preyColor := canvas.MakeColor(prey_red, prey_green, prey_blue)
 
-	// var prey_red uint8 = 255
+	// var prey_red uint8 = 0
 	// var prey_green uint8 = 0
-	// var prey_blue uint8 = 0
+	// var prey_blue uint8 = 255
 	// predColor := canvas.MakeColor(pred_red, pred_green, pred_blue)
 
 	// range over all the Units and draw them.
@@ -81,6 +81,8 @@ func (eco *Ecosystem) DrawToCanvas(canvasWidth int, scalingFactor float64) image
 			if curUnit.food.isPresent {
 				// fmt.Println("this ran")
 				c.SetFillColor(foodColor)
+
+				// make the food smaller
 				x := j * unitWidth
 				y := i * unitWidth
 				c.ClearRect(x, y, x+unitWidth, y+unitWidth)
