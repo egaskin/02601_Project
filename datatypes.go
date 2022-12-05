@@ -32,9 +32,9 @@ type Organism struct {
 type Gene float64 // with range 0 to 1. all the genes of a genome add up to 1
 
 type Prey struct {
-	Organism
+	organism Organism
 }
 
 type Predator struct {
-	Organism
+	organism Organism
 }
