@@ -75,6 +75,6 @@ func (currPrey Prey) DecreaseEnergy(currPrey *Prey) {
 	} else if currPrey.lastDirection == 3 || currPrey.lastDirection == 5 {
 		currPrey.energy -= 4
 	} else if currPrey.lastDirection == 4 {
-		currPrey.energy -= 4
+		currPrey.energy -= 8
 	}
 }
