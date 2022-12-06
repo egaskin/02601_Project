@@ -44,9 +44,14 @@ func MovePrey(currentUnit *Unit, currentEcosystem *Ecosystem, i, j, curGen int) 
 	currentPrey.DecreaseEnergy(geneIndex, isMoving)
 
 	currentUnit.prey = nil
-	currentPrey.lastDirection = newDirection
-	// when deltaX and deltaY == 0, currentPrey stay at unit [i, j]
-	currentEcosystem[i+deltaX][j+deltaY].prey = currentPrey
+
+	// check if energy level > 0
+	// if it is not, update direction
+	if currentPrey.energy > 0 {
+		currentPrey.lastDirection = newDirection
+		// when deltaX and deltaY == 0, currentPrey stay at unit [i, j]
+		currentEcosystem[i+deltaX][j+deltaY].prey = currentPrey
+	}
 }
 
 func CheckIfEats(currentUnit *Unit, currentPrey *Prey) bool {
