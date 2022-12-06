@@ -65,3 +65,57 @@ func ReproducePredator(p *Predator) *Predator {
 	UpdateGenome(&child.Organism)
 	return &child
 }
+
+func UpdatePrey(currentEcosystem *Ecosystem, i, j, currGen int) {
+
+	currentPrey := (*currentEcosystem)[i][j].prey
+	// only move the prey if hasn't moved this generation
+	if currentPrey.lastGenUpdated != currGen {
+		currentPrey.lastGenUpdated = currGen
+		UpdateAgePrey(currentPrey)
+		if (*currentEcosystem)[i][j].prey.energy >= energyThreshold && (*currentEcosystem)[i][j].prey.age >= ageThreshold {
+			freeUnits := GetAvailableUnits(currentEcosystem, i, j)
+			if len(freeUnits) != 0 {
+				deltaX, deltaY := pickUnit(&freeUnits)
+				(*currentEcosystem)[i+deltaX][j+deltaY].prey = ReproducePrey(currentPrey)
+			}
+
+		}
+		MovePrey(currentEcosystem, i, j)
+	}
+}
+
+func pickUnit(freeUnits *[]int) (r, c int) {
+	length := len(*freeUnits)
+	random := rand.Intn(length)
+	chosenUnit := (*freeUnits)[random]
+	return GetIndices(&chosenUnit)
+}
+
+func GetIndices(chosenUnit *int) (r, c int) {
+	if *chosenUnit == 0 {
+		return -1, -1
+	}
+	if *chosenUnit == 1 {
+		return -1, 0
+	}
+	if *chosenUnit == 2 {
+		return -1, 1
+	}
+	if *chosenUnit == 3 {
+		return 0, 1
+	}
+	if *chosenUnit == 4 {
+		return 1, 1
+	}
+	if *chosenUnit == 5 {
+		return 1, 0
+	}
+	if *chosenUnit == 6 {
+		return 1, -1
+	}
+	if *chosenUnit == 7 {
+		return 0, -1
+	}
+	return 0, 0
+}
