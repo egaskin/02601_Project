@@ -1,13 +1,36 @@
 package main
 
+import "math/rand"
+
+//Set a constant dictionary where keys are the directionIndex and the values are the orderedPair with corresponding deltaX and deltaY
+// movementDeltas := map[int]OrderedPair {
+// 	0: OrderedPair{-1, -1},
+// 	1: OrderedPair{0, -1},
+// 	2: OrderedPair{1, -1},
+// 	3: OrderedPair{1, 0},
+// 	4: OrderedPair{1, 1},
+// 	5: OrderedPair{0, 1},
+// 	6: OrderedPair{-1, 1},
+// 	7: OrderedPair{-1, 0},
+// }
+
+// Gene index to energy cost
+// energyCosts := map[int]int {
+// 	0: 0,
+// 	1: -1,
+// 	2: -2,
+// 	3: -4,
+// 	4: -8,
+// 	5: -4,
+// 	6: -2,
+// 	7: -1,
+// }
+
 // Input: currentUnit is a pointer to a unit, currentEcosystem is a pointer to the ecosystem, i and j are the indices of the location of the unit we are about to move, curGen is the number of generations of the unit we are about to move.
 // Output: none, operates on pointers
 func MovePrey(currentUnit *Unit, currentEcosystem *Ecosystem, i, j, curGen int) {
 	currentPrey := currentUnit.prey
-	deltaX, deltaY, moveIndex := UseGenomeToMove(currentPrey)
-	//movementDeltas store orderedPair of deltaX and deltaY
-	movementDeltas = deltas[currentPrey.lastDirection]
-	currentUnit.prey = nil
+	deltaX, deltaY, newDirection, geneIndex := UseGenomeToMove(currentEcosystem, currentPrey, i, j)
 
 	// check if the prey eats
 	//if (*currentEcosystem)[i+deltaX][j+deltaY].food.isPresent == true {
@@ -16,65 +39,95 @@ func MovePrey(currentUnit *Unit, currentEcosystem *Ecosystem, i, j, curGen int) 
 	}
 
 	// energy decreases based on how drastic the change in direction is for the movement
-	currentPrey.DecreaseEnergy()
+	// if at least one of deltaX or deltaY is not equal to 0, we move the prey
+	isMoving := deltaX != 0 || deltaY != 0
+	currentPrey.DecreaseEnergy(geneIndex, isMoving)
 
-	// check if there is something in the unit already. if there isn't anything then the prey doesn't move. alternatively we can randomly choose an open Unit adjacnet to the prey
-	if (*currentEcosystem)[i+deltaX][j+deltaY].prey == nil && (*currentEcosystem)[i+deltaX][j+deltaY].predator == nil {
-		(*currentEcosystem)[i+deltaX][j+deltaY].prey = currentPrey
-		currentPrey.lastDirection = lastDirection
-		currentPrey.lastGenUpdated = curGen
-	}
-
+	currentUnit.prey = nil
+	currentPrey.lastDirection = newDirection
+	// when deltaX and deltaY == 0, currentPrey stay at unit [i, j]
+	currentEcosystem[i+deltaX][j+deltaY].prey = currentPrey
 }
 
-func CheckIfEats(currUnit *Unit, currPrey *Prey) bool {
-	return currUnit.food.isPresent && currPrey.energy < maxEnergy
+func CheckIfEats(currentUnit *Unit, currentPrey *Prey) bool {
+	return currentUnit.food.isPresent && (currentPrey.energy < maxEnergy)
 }
 
-func (currPrey Prey) FeedOrganism(currUnit *Unit) {
-	currUnit.food.isPresent = false
-	currPrey.energy += 1
-}
-//Set a constant dictionary where keys are the directionIndex and the values are the orderedPair with corresponding deltaX and deltaY
-deltas := map[int]OrderedPair {
-	0: OrderedPair{-1, 1},
-	1: OrderedPair{0, 1},
-	2: OrderedPair{1, 1},
-	3: OrderedPair{-1, 0},
-	4: OrderedPair{1, 0},
-	5: OrderedPair{-1, -1},
-	6: OrderedPair{0, -1},
-	7: OrderedPair{1, -1},
+func (currentPrey Prey) FeedOrganism(currentUnit *Unit) {
+	currentUnit.food.isPresent = false
+	currentPrey.energy += 1
 }
 
 // cannot move to unit where there's shark (predator)
 //deltaX, deltaY, lastDirection := UseGenomeToMove(currentPrey)
-func UseGenomeToMove(*currPrey) int, int {
-	r := rand.Float64()
-	directionIndex := 0
-	runningSum := 0
-	for idx, gene := range currPrey.genome {
-		runningSum += gene
-		if runningSum >= r {
-			directionIndex = idx
-			break
+func UseGenomeToMove(currentEcosystem *Ecosystem, currentPrey *Prey, i, j int) (int, int, int) {
+	numRows = len(currentEcosystem)
+	numCols = len(currentEcosystem[0])
+
+	isFreeUnit := false
+	numTries := 0
+
+	// 20 is the threshold for max number of tries we get to reselect a gene for movement
+	// if numberTries >= 20 and isFreeUnit is still false
+	// the prey doesn't move
+	for !isFreeUnit && numTries < 20 {
+		r := rand.Float64()
+		geneIndex := 0
+		runningSum := 0
+		for idx, gene := range currentPrey.genome {
+			runningSum += gene
+			if runningSum >= r {
+				geneIndex = idx
+				break
+			}
 		}
+		newDirection := (currentPrey.lastDirection + geneIndex) % 8
+		moveDeltas := deltas[newDirection]
+		newI := GetIndex(i, moveDeltas.row, numRows)
+		newJ := GetIndex(j, moveDeltas.col, numCols)
+
+		isFreeUnit = isFreeUnit(currentEcosystem, i, j)
+		numTries += 1
 	}
+	// if numTries >= 20 and still haven't find a free unit, we don't move
+	if !isFreeUnit {
+		geneIndex = 0
+		newDirection = currentPrey.lastDirection
+		moveDeltas = OrderedPair(0, 0)
+	}
+
 	//lastDirection will be updated with my new direction
-	currentPrey.lastDirection = (currentPrey.lastDirection + directionIndex) % 8
-	moveDeltas := deltas[currentPrey.lastDirection]
-	return moveDeltas.x, moveDeltas.y
+	return moveDeltas.row, moveDeltas.col, newDirection, geneIndex
 }
 
-func (currPrey Prey) DecreaseEnergy(currPrey *Prey) {
-	currPrey.energy -= 1
-	if currPrey.lastDirection == 1 || currPrey.lastDirection == 7 {
-		currPrey.energy -= 1
-	} else if currPrey.lastDirection == 2 || currPrey.lastDirection == 6 {
-		currPrey.energy -= 2
-	} else if currPrey.lastDirection == 3 || currPrey.lastDirection == 5 {
-		currPrey.energy -= 4
-	} else if currPrey.lastDirection == 4 {
-		currPrey.energy -= 8
+func (currentPrey *Prey) DecreaseEnergy(geneIndex int, isMoving bool) {
+	currentPrey.energy -= 1
+
+	// if prey needs to be moved since either deltaX or deltaY or both are not equal to 0
+	// we decrease the energy based on the geneIndex
+	if isMoving {
+		currentPrey.energy -= energyCosts[geneIndex]
 	}
+}
+
+// check if unit (i, j) is unoccupied by a predator or another prey
+func isFreeUnit(currentEcosystem *Ecosystem, i, j int) bool {
+	if (*currentEcosystem)[i][j].prey == nil && (*currentEcosystem)[i][j].predator == nil {
+		return true
+	} else {
+		return false
+	}
+}
+
+// pass in the row, column indices and the delta for movement
+// return new row, column indices within the boundary
+// boundary is the numRow and numCol of the ecosystem board
+func GetIndex(index, delta, boundary int) int {
+	newIndex := index + delta
+	if newIndex < 0 {
+		newIndex = boundary + newIndex
+	} else if newIndex >= boundary {
+		newIndex = newIndex % boundary
+	}
+	return newIndex
 }
