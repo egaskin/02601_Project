@@ -146,3 +146,37 @@ func InitializePreyAndPredator(numRows, numCols, numPrey, numPred int, newEco *E
 		}
 	}
 }
+
+// Akshat: CreatePrey initializes the Prey object
+func CreatePrey() *Prey {
+	var newPrey Prey
+	newPrey.Organism.age = 0
+	newPrey.Organism.energy = 5
+	newPrey.Organism.age = 0
+	newPrey.Organism.genome = CreateGenome()
+	newPrey.Organism.lastGenUpdated = 0
+	newPrey.Organism.lastDirection = 0
+	return &newPrey
+}
+
+// Akshat: CreatePrey initializes the Predator object
+func CreatePredator() *Predator {
+	var newPredator Predator
+	newPredator.Organism.age = 0
+	newPredator.Organism.energy = 5
+	newPredator.Organism.age = 0
+	newPredator.Organism.genome = CreateGenome()
+	newPredator.Organism.lastGenUpdated = 0
+	newPredator.Organism.lastDirection = 0
+	return &newPredator
+
+}
+
+// Akshat: CreateGenome creates the first version of the genome and returns it.
+func CreateGenome() [8]Gene {
+	var newGenome [8]Gene
+	for i := range newGenome {
+		newGenome[i] = Gene(0.125)
+	}
+	return newGenome
+}
