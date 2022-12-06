@@ -119,3 +119,30 @@ func GetIndices(chosenUnit *int) (r, c int) {
 	}
 	return 0, 0
 }
+
+// Akshat: InitializePreyAndPredator
+// Randomly generate numPrey and numPred predators in the initialEcosystem.
+// Functions written by Akshat
+func InitializePreyAndPredator(numRows, numCols, numPrey, numPred int, newEco *Ecosystem) {
+	// Akshat wrote these: Randomly initialize the prey and predators
+	count_Prey := 0
+	count_Pred := 0
+
+	for count_Pred < numPred {
+		i := rand.Intn(numRows)
+		j := rand.Intn(numCols)
+		if (*newEco)[i][j].predator == nil {
+			(*newEco)[i][j].predator = CreatePredator()
+		}
+		count_Pred += 1
+	}
+
+	for count_Prey < numPrey {
+		i := rand.Intn(numRows)
+		j := rand.Intn(numCols)
+		if (*newEco)[i][j].prey == nil && (*newEco)[i][j].predator == nil {
+			(*newEco)[i][j].prey = CreatePrey()
+			count_Prey += 1
+		}
+	}
+}
