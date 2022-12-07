@@ -2,142 +2,137 @@ package main
 
 import "math/rand"
 
+
+// Set a constant dictionary where keys are the directionIndex and the values are the orderedPair with corresponding deltaX and deltaY
+movementDeltas := map[int]OrderedPair {
+	0: OrderedPair{-1, -1},
+	1: OrderedPair{0, -1},
+	2: OrderedPair{1, -1},
+	3: OrderedPair{1, 0},
+	4: OrderedPair{1, 1},
+	5: OrderedPair{0, 1},
+	6: OrderedPair{-1, 1},
+	7: OrderedPair{-1, 0},
+}
+
+// Gene index to energy cost
+energyCosts := map[int]int {
+	0: 0,
+	1: -1,
+	2: -2,
+	3: -4,
+	4: -8,
+	5: -4,
+	6: -2,
+	7: -1,
+}
+
+
 // UpdatePredator is a Predator method which will take a Predator input and update the position, initiate eating, reproduction, and age accordingly
-func (shark *Predator) UpdatePredator(currEco, nextEco *Ecosystem, i, j int) {
+func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j int) {
 
-	if shark.organism.energy == 0 {
+	if shark.Organism.energy == 0 {
 
-		(*nextEco)[i][j].predator = nil
+		(*currEco)[i][j].predator = nil
 
 	} else {
 
-		//1. Update Position first if energy is allowed
+		//1. Update POSITION AND ENERGY first if energy is allowed
 		// This UpdatePosition will scan through all 7 units, give a list of available units, and use GENOME to update
 		//	We prioritize the GENOME instead of the fish
 		// This function will UpdatePredatorPosition while returning the new index
-		x, y := shark.UpdatePredatorPosition(currEco, nextEco, i, j)
+		deltaRow, deltaCol, newDirection, geneIndex, newR, newC := shark.UseGenomeToMove(currEco, i, j)
+		isMoving := deltaRow != 0 || deltaCol != 0
+		shark.DecreaseEnergy(geneIndex, isMoving)
 
+		(*currEco)[i][j].predator = nil
+		
+		if shark.energy > 0 {
+			currEco[newR][newC].predator.lastDirection = newDirection
+			currEco[newR][newC].predator = shark		
+		}
+		
 		// 2. FEEDING:
 		// Check to eat fish or not
-		shark.FeedShark(currEco, nextEco, x, y)
+		shark.FeedShark(currEco, newR, newC)
 
-		//3. Reproduction
+		//3. AGE
+		shark.UpdateAge() //Just add one
 
-		if shark.CheckAge(20) == true && shark.CheckEnergy(1000) == true {
+		//4. Reproduction
+		if shark.CheckAge(ageThresholdPredator) && shark.CheckEnergy(energyThresholdPredator) {
 			var babyShark Predator
-			shark.Reproduce(&babyShark)
+			freeUnits := GetAvailableUnits(currEco, i, j)
+			if len(freeUnits) != 0 {
+				deltaX, deltaY := pickUnit(&freeUnits)
+				(*currEco)[i+deltaX][j+deltaY] = &babyShark
+				shark.Reproduce(&babyShark)
+			}
+			
 		}
 
-		//UpdateAge
-		shark.UpdateAge() //Just add one
 	}
 
 }
 
-// UpdatePredatorPosition is the Predator method which will update the position and energy of the Predator according to the food
-func (shark *Predator) UpdatePredatorPosition(currEco, nextEco *Ecosystem, r, c int) (int, int) {
+// UseGenomeToMovePredator()
+func (shark *Predator) UseGenomeToMove(currentEcosystem *Ecosystem, i, j int) (int, int, int, int, int, int) {
+	var moveDeltas OrderedPair
+	var geneIndex, newDirection, newI, newJ int
+	isFreeUnitFlag := false
+	numTries := 0
 
-	//1. Grab all available units around it
-	vacantUnits := GetAvailableUnits(currEco, r, c)
-
-	//2. Check the genome and give the best move
-	tempGenome := make([]Gene, 8)
-	for i := range shark.organism.genome {
-		tempGenome[i] = shark.organism.genome[i]
-	}
-	sortedGenome := QuicksortGenome(tempGenome)
-
-	sortedGenomeIndex := GiveSortedIndex(sortedGenome, tempGenome)
-
-	var r0, c0 int
-
-	if len(vacantUnits) != 0 {
-		var nextMove int
-		for i := range sortedGenomeIndex {
-			if IsPresent(vacantUnits, sortedGenomeIndex[i]) {
-				nextMove = sortedGenomeIndex[i]
+	// 20 is the threshold for max number of tries we get to reselect a gene for movement
+	// if numberTries >= 20 and isFreeUnitFlag is still false
+	// the prey doesn't move
+	for !shark.isFreeUnit() && numTries < 20 {
+		r := rand.Float64()
+		geneIndex = 0
+		runningSum := 0.0
+		for idx, gene := range shark.genome {
+			runningSum += float64(gene)
+			if runningSum >= r {
+				geneIndex = idx
 				break
 			}
 		}
+		newDirection := (shark.lastDirection + geneIndex) % 8
+		moveDeltas = deltas[newDirection]
+		numRows := len(*currentEcosystem)
+		numCols := len((*currentEcosystem)[0])
+		newI = GetIndex(i, moveDeltas.row, numRows)
+		newJ = GetIndex(j, moveDeltas.col, numCols)
 
-		r0, c0 = ConvertMovingIndices(nextMove, r, c)
 
-		//After moving, decrease the energy
-		shark.DecreaseEnergy()
-	} else {
-		r0 = r
-		c0 = c
+		//This check if the unit is free or not
+		isFreeUnitFlag = isFreeUnit(currentEcosystem, i, j)
+		numTries += 1
 	}
-	(*nextEco)[r0][c0].predator = shark
-
-	return r0, c0
-}
-
-func GiveSortedIndex(g1, g0 []Gene) []int {
-	var index []int
-	for i := range g1 {
-		for j := range g0 {
-			if g1[i] == g0[j] {
-				index[i] = j
-			}
-		}
+	// if numTries >= 20 and still haven't find a free unit, we don't move
+	if !shark.isFreeUnit() {
+		geneIndex = 0
+		newDirection = currentPredator.lastDirection
+		moveDeltas.row, moveDeltas.col = 0, 0
 	}
-	return index
+
+	//lastDirection will be updated with my new direction
+	return moveDeltas.row, moveDeltas.col, newDirection, geneIndex, newI, newJ
 }
 
-func QuicksortGenome(genome []Gene) []Gene {
-
-	var sortedGenome []Gene
-	var left, right []Gene
-
-	//randomly choose an pivot
-	pivotIdx := PickPivot(8)
-	pivot := genome[pivotIdx]
-
-	//Range over the genome, and compare with pivot
-	for i := range genome {
-		//Not include pivot
-		if i != pivotIdx && genome[i] < pivot {
-			left = append(left, genome[i])
-		}
-		if i != pivotIdx && genome[i] >= pivot {
-			right = append(right, genome[i])
-		}
-
-	}
-	left = QuicksortGenome(left)
-	right = QuicksortGenome(right)
-
-	sortedGenome = left
-	sortedGenome = append(sortedGenome, pivot)
-	sortedGenome = append(sortedGenome, right...)
-
-	return sortedGenome
+func (shark *Predator) isFreeUnit(currEco *Ecosystem, i, j int) bool {
+	return (*currEco)[i][j].predator == nil
 }
 
-func PickPivot(len int) int {
-	return rand.Intn(len)
-}
-
-func (shark *Predator) FeedShark(currEco, nextEco *Ecosystem, x, y int) {
+func (shark *Predator) FeedShark(currEco *Ecosystem, x, y int) {
 	if (*currEco)[x][y].prey != nil {
-		(*nextEco)[x][y].prey = nil
+		(*currEco)[x][y].prey = nil
 	}
 	shark.IncreaseEngeryAfterMeal() //increase energy after eating a fish
 
 }
 
 func (shark *Predator) IncreaseEngeryAfterMeal() {
-	shark.organism.energy += 1
-}
-
-func IsPresent(vacantUnits []int, genomeIndex int) bool {
-	for i := range vacantUnits {
-		if genomeIndex == vacantUnits[i] {
-			return true
-		}
-	}
-	return false
+	shark.Organism.energy += 1
 }
 
 func GetAvailableUnits(currEco *Ecosystem, r, c int) []int {
@@ -169,103 +164,32 @@ func GetAvailableUnits(currEco *Ecosystem, r, c int) []int {
 	return units
 }
 
-func ConvertMovingIndices(nextMove, r, c int) (int, int) {
-	var i, j int
-	if nextMove == 0 {
-		i = r - 1
-		j = c - 1
-	} else if nextMove == 1 {
-		i = r - 1
-		j = c
-	} else if nextMove == 2 {
-		i = r - 1
-		j = c + 1
-	} else if nextMove == 3 {
-		i = r
-		j = c - 1
-	} else if nextMove == 4 {
-		i = r
-		j = c + 1
-	} else if nextMove == 5 {
-		i = r + 1
-		j = c - 1
-	} else if nextMove == 6 {
-		i = r + 1
-		j = c
-	} else if nextMove == 7 {
-		i = r + 1
-		j = c + 1
-	}
-	return i, j
-}
-
-func GetUnit(r, c, i, j, n int) int {
-	var unit int
-	rowDelta := r - i
-	colDelta := c - j
-
-	//edge case
-	if rowDelta < -1 { //first row
-		rowDelta = 1
-	}
-	if rowDelta > 1 { //last row
-		rowDelta = -1
-	}
-	if colDelta < -1 { //first col
-		colDelta = 1
-	}
-	if colDelta > 1 { //last col
-		colDelta = -1
-	}
-
-	if rowDelta == 1 && colDelta == 1 {
-		unit = 0
-	} else if rowDelta == 1 && colDelta == 0 {
-		unit = 1
-	} else if rowDelta == -1 && colDelta == -1 {
-		unit = 2
-	} else if rowDelta == 0 && colDelta == 1 {
-		unit = 3
-	} else if rowDelta == 0 && colDelta == -1 {
-		unit = 4
-	} else if rowDelta == -1 && colDelta == 1 {
-		unit = 5
-	} else if rowDelta == -1 && colDelta == 0 {
-		unit = 6
-	} else if rowDelta == -1 && colDelta == -1 {
-		unit = 7
-	}
-	return unit
-}
-
-func IsItAvailable(unit *Unit, IsThisAPredator bool) bool {
-	//Check if there is any predator
-	return unit.predator == nil
-}
 
 func (shark *Predator) Reproduce(babyShark *Predator) {
 	//Already check age and energy!!!!
-	shark.organism.age = 0
-	babyShark.organism.energy = shark.organism.energy / 2
-	shark.organism.energy /= 2
-	babyShark.organism.genome = shark.organism.genome // Check if the array needs to be copied manually.
-	UpdateDirection(&shark.organism, &babyShark.organism)
-	UpdateGenome(&babyShark.organism)
+	shark.Organism.age = 0
+	babyShark.Organism.energy = shark.Organism.energy / 2
+	shark.Organism.energy /= 2
+	babyShark.Organism.genome = shark.Organism.genome // Check if the array needs to be copied manually.
+	UpdateDirection(&shark.Organism, &babyShark.Organism)
+	UpdateGenome(&babyShark.Organism)
 
 }
 
 func (shark *Predator) CheckAge(threshold int) bool {
-	return shark.organism.age >= threshold
+	return shark.Organism.age >= threshold
 }
 
 func (shark *Predator) CheckEnergy(threshold int) bool {
-	return shark.organism.energy >= threshold
+	return shark.Organism.energy >= threshold
 }
 
 func (shark *Predator) UpdateAge() {
-	shark.organism.age += 1
+	shark.Organism.age += 1
 }
 
-func (shark *Predator) DecreaseEnergy() {
-	shark.organism.energy -= 1
+func (shark *Predator) DecreaseEnergy(geneIndex int, isMoving bool) {
+	if isMoving {
+		shark.energy -= energyCosts[geneIndex]
+	}
 }
