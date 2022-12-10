@@ -33,7 +33,7 @@ func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j, curGen int) {
 	// note we have moved the shark this timestep/generation
 	shark.lastGenUpdated = curGen
 
-	if shark.Organism.energy == 0 {
+	if shark.Organism.energy <= 0 {
 		(*currEco)[i][j].predator = nil
 
 	} else {
@@ -53,6 +53,7 @@ func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j, curGen int) {
 		if shark.energy > 0 {
 			(*currEco)[newR][newC].predator = shark
 			(*currEco)[newR][newC].predator.lastDirection = newDirection
+			(*currEco)[i][j].predator = nil // remove the original pointer
 		}
 
 		// 2. FEEDING:
@@ -64,9 +65,11 @@ func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j, curGen int) {
 
 		//4. Reproduction
 		if shark.CheckAge(ageThresholdPredator) && shark.CheckEnergy(energyThresholdPredator) {
-			var babyShark Predator
+
 			freeUnits := GetAvailableUnits(currEco, i, j)
+
 			if len(freeUnits) != 0 {
+				var babyShark Predator
 				deltaX, deltaY := pickUnit(&freeUnits)
 				(*currEco)[i+deltaX][j+deltaY].predator = &babyShark
 				shark.Reproduce(&babyShark)
@@ -128,8 +131,9 @@ func (shark *Predator) isFreeUnit(currEco *Ecosystem, i, j int) bool {
 func (shark *Predator) FeedShark(currEco *Ecosystem, x, y int) {
 	if (*currEco)[x][y].prey != nil {
 		(*currEco)[x][y].prey = nil
+		shark.IncreaseEngeryAfterMeal() //increase energy after eating a fish
+
 	}
-	shark.IncreaseEngeryAfterMeal() //increase energy after eating a fish
 
 }
 
@@ -155,12 +159,12 @@ func GetAvailableUnits(currEco *Ecosystem, r, c int) []int {
 			}
 			if j == len(*currEco) {
 				j = 0
-
-				if IsItAvailable((*currEco)[i][j], true) {
-					n = GetUnit(r, c, i, j, len(*currEco))
-					units = append(units, n)
-				}
 			}
+			if IsItAvailable((*currEco)[i][j], true) {
+				n = GetUnit(r, c, i, j, len(*currEco))
+				units = append(units, n)
+			}
+
 		}
 	}
 	return units
@@ -190,10 +194,10 @@ func (shark *Predator) UpdateAge() {
 }
 
 func (shark *Predator) DecreaseEnergy(geneIndex int, isMoving bool) {
+	shark.energy -= costOfLivingPredator
+
 	if isMoving {
 		shark.energy -= energyCosts[geneIndex]
-	} else {
-		shark.energy -= costOfLivingPredator
 	}
 }
 
