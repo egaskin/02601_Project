@@ -236,6 +236,7 @@ func ChooseRandomIndices(numChoices int) int {
 
 // Input: an Ecosystem pointer
 // Output: a 1D array containing every combination of row and col (all the indices of that Ecosystem) as an OrderedPair
+// https://go.dev/play/p/k3_wRjPRuzH
 func MakeIndicesArray(someEcosystem *Ecosystem) []OrderedPair {
 
 	// get the number of rows and cols in the ecosystem
@@ -262,8 +263,8 @@ func MakeIndicesArray(someEcosystem *Ecosystem) []OrderedPair {
 // Input: indicesAvailable, a 2D array of OrderedPair containing the indices available for the ecosystem to choose. dont confuse the indices of this array, with the indices available!
 // Output: none! operates on a pointer to makes updated indicesAvailable
 func UpdateIndices(indicesAvailable []OrderedPair, chosenOrderedPair int) []OrderedPair {
-	// set the index values at that location to -1, -1 so that we know we've visited that location already
-	indicesAvailable = append((indicesAvailable)[:chosenOrderedPair], (indicesAvailable)[chosenOrderedPair:]...)
+	// delete the chosen location from the array of indices available.
+	indicesAvailable = append((indicesAvailable)[:chosenOrderedPair], (indicesAvailable)[chosenOrderedPair+1:]...)
 
 	return indicesAvailable
 }
