@@ -12,16 +12,14 @@ func UpdateAgePredator(p *Predator) {
 	p.Organism.age += 1
 }
 
-func ReproducePrey(p *Prey) *Prey {
+func ReproducePrey(parent, child *Prey) {
 	//This function will only be called if the age and energy and requirements are met. Check these requirements before calling this function.
-	var child Prey
-	p.Organism.age = 0
-	child.Organism.energy = p.Organism.energy / 2
-	p.Organism.energy /= 2
-	child.Organism.genome = p.Organism.genome // Check if the array needs to be copied manually.
-	UpdateDirection(&p.Organism, &child.Organism)
+	parent.Organism.age = 0
+	child.Organism.energy = parent.Organism.energy / 2
+	parent.Organism.energy /= 2
+	child.Organism.genome = parent.Organism.genome // Check if the array needs to be copied manually.
+	UpdateDirection(&parent.Organism, &child.Organism)
 	UpdateGenome(&child.Organism)
-	return &child
 }
 
 //UpdateDirection updates the direction of that the child is moving in based on the parents genome and direction of movement
@@ -67,16 +65,23 @@ func ReproducePredator(p *Predator) *Predator {
 }
 
 func UpdatePrey(currentEcosystem *Ecosystem, i, j, currGen int) {
-
 	currentPrey := (*currentEcosystem)[i][j].prey
 	// note we have moved the prey this timestep/generation
 	currentPrey.lastGenUpdated = currGen
+
+	if currentPrey.Organism.energy <= 0 {
+		(*currentEcosystem)[i][j].prey = nil
+		return
+	}
+
 	UpdateAgePrey(currentPrey)
 	if (*currentEcosystem)[i][j].prey.energy >= energyThresholdPrey && (*currentEcosystem)[i][j].prey.age >= ageThresholdPrey {
+		var babyPrey Prey
 		freeUnits := GetAvailableUnits(currentEcosystem, i, j)
 		if len(freeUnits) != 0 {
 			deltaX, deltaY := pickUnit(&freeUnits)
-			(*currentEcosystem)[i+deltaX][j+deltaY].prey = ReproducePrey(currentPrey)
+			(*currentEcosystem)[i+deltaX][j+deltaY].prey = &babyPrey
+			ReproducePrey(currentPrey, &babyPrey)
 		}
 
 	}
@@ -150,7 +155,7 @@ func InitializePreyAndPredator(numRows, numCols, numPrey, numPred int, newEco *E
 func CreatePrey() *Prey {
 	var newPrey Prey
 	newPrey.Organism.age = 0
-	newPrey.Organism.energy = 500
+	newPrey.Organism.energy = 5
 	newPrey.Organism.age = 0
 	newPrey.Organism.genome = CreateGenome()
 	newPrey.Organism.lastGenUpdated = 0
@@ -162,7 +167,7 @@ func CreatePrey() *Prey {
 func CreatePredator() *Predator {
 	var newPredator Predator
 	newPredator.Organism.age = 0
-	newPredator.Organism.energy = 50
+	newPredator.Organism.energy = 5
 	newPredator.Organism.age = 0
 	newPredator.Organism.genome = CreateGenome()
 	newPredator.Organism.lastGenUpdated = 0

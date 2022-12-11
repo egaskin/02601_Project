@@ -1,6 +1,8 @@
 package main
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 //Set a constant dictionary where keys are the directionIndex and the values are the orderedPair with corresponding deltaX and deltaY
 // movementDeltas := map[int]OrderedPair {
@@ -56,10 +58,18 @@ func MovePrey(currentEcosystem *Ecosystem, i, j int) {
 	if currentPrey.energy > 0 {
 
 		// when deltaX and deltaY == 0, currentPrey stay at unit [i, j]
-		(*currentEcosystem)[i+deltaX][j+deltaY].prey = currentPrey
+		// (*currentEcosystem)[i+deltaX][j+deltaY].prey = currentPrey
+		(*currentEcosystem)[newI][newJ].prey = currentPrey
+		// fmt.Println(deltaX, deltaY)
 
 		// comes after moving the prey
 		currentPrey.lastDirection = newDirection
+
+		// // if the current Unit doesnt change, then we don't need to delete the prey from this unit, since we didn't move prey out of it.
+		// if deltaX != 0 && deltaY != 0 {
+		// 	currentUnit.prey = nil
+		// }
+
 	}
 }
 
@@ -115,14 +125,12 @@ func UseGenomeToMovePrey(currentEcosystem *Ecosystem, currentPrey *Prey, i, j in
 }
 
 func (currentPrey *Prey) DecreaseEnergy(geneIndex int, isMoving bool) {
-	currentPrey.energy -= 1
+	currentPrey.energy -= costOfLivingPrey
 
 	// if prey needs to be moved since either deltaX or deltaY or both are not equal to 0
 	// we decrease the energy based on the geneIndex
 	if isMoving {
 		currentPrey.energy -= energyCosts[geneIndex]
-	} else {
-		currentPrey.energy -= costOfLivingPrey
 	}
 }
 
