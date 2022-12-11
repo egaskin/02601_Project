@@ -175,7 +175,7 @@ func GetAvailableUnits(currEco *Ecosystem, r, c int) []int {
 				}
 
 				// fmt.Println("We saw this")
-				n = GetUnit(r, c, i, j_updated, len(*currEco))
+				n = GetUnit(r, c, i_updated, j_updated, len(*currEco))
 				units = append(units, n)
 				// fmt.Println("We finished this")
 			}
