@@ -145,24 +145,39 @@ func GetAvailableUnits(currEco *Ecosystem, r, c int) []int {
 	var units []int
 	var n int
 	for i := r - 1; i <= r+1; i++ {
+		i_updated := -1
 
 		if i < 0 {
-			i = len(*currEco) - 1
+			i_updated = len(*currEco) - 1
 		}
 		if i == len(*currEco) {
-			i = 0
+			i_updated = 0
 		}
 
 		for j := c - 1; j <= c+1; j++ {
+			j_updated := -1
 			if j < 0 {
-				j = len(*currEco) - 1
+				j_updated = len(*currEco) - 1
 			}
 			if j == len(*currEco) {
-				j = 0
+				j_updated = 0
 			}
+
 			if IsItAvailable((*currEco)[i][j], true) {
-				n = GetUnit(r, c, i, j, len(*currEco))
+
+				// j_updated didn't change, it should be j still
+				if j_updated == -1 {
+					j_updated = j
+				}
+
+				if i_updated == -1 {
+					i_updated = i
+				}
+
+				// fmt.Println("We saw this")
+				n = GetUnit(r, c, i, j_updated, len(*currEco))
 				units = append(units, n)
+				// fmt.Println("We finished this")
 			}
 
 		}
