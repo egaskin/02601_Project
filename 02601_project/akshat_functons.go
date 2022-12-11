@@ -65,6 +65,8 @@ func ReproducePredator(p *Predator) *Predator {
 }
 
 func UpdatePrey(currentEcosystem *Ecosystem, i, j, currGen int) {
+	numRows := len(*currentEcosystem)
+	numCols := len((*currentEcosystem)[0])
 	currentPrey := (*currentEcosystem)[i][j].prey
 	// note we have moved the prey this timestep/generation
 	currentPrey.lastGenUpdated = currGen
@@ -80,7 +82,9 @@ func UpdatePrey(currentEcosystem *Ecosystem, i, j, currGen int) {
 		freeUnits := GetAvailableUnits(currentEcosystem, i, j)
 		if len(freeUnits) != 0 {
 			deltaX, deltaY := pickUnit(&freeUnits)
-			(*currentEcosystem)[i+deltaX][j+deltaY].prey = &babyPrey
+			newI := GetIndex(i, deltaX, numRows)
+			newJ := GetIndex(j, deltaY, numCols)
+			(*currentEcosystem)[newI][newJ].prey = &babyPrey
 			ReproducePrey(currentPrey, &babyPrey)
 		}
 
