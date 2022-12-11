@@ -54,7 +54,7 @@ func main() {
 	var numPrey int = 5
 	var numPred int = 5
 	var initialEcosystem Ecosystem = InitializeEcosystem(numRows, numCols, numPrey, numPred)
-	var totalTimesteps int = 20
+	var totalTimesteps int = 10
 	var foodRule string = "gardenOfEden"
 
 	// seed the PRNG approximately randomly
@@ -168,107 +168,105 @@ func UpdateEcosystem(prevEcosystem *Ecosystem, foodRule string, curGen int) *Eco
 	// get ready to loop through all the possible indices of the ecosystem using a while loop
 	totalUpdates := numCols * numRows
 	k := 0
-	start1 := time.Now()
-	log.Printf("Starting entire ecosystem update")
+
 	for k < totalUpdates {
+		// choose a random index from the arrayOfIndices, each index has a unique OrderedPair representing a Unit location in the Ecosystem
+		chosenOrderedPair := ChooseRandomIndices(len(arrayOfIndices))
+		i := arrayOfIndices[chosenOrderedPair].row
+		j := arrayOfIndices[chosenOrderedPair].col
 
-		i, j := ChooseRandomIndices(numRows, numCols)
+		// update the array of indices
+		arrayOfIndices = UpdateIndices(arrayOfIndices, chosenOrderedPair)
 
-		// only update if the chosenRow, chosenCol is a valid location in the ecosystem
-		if i != -1 && j != -1 {
-			// only update i when we visit a valid location
-			k++
-			// update the indices array
-			UpdateIndices(&arrayOfIndices, i, j)
+		// get a pointer to the current Unit that we need new values for (nextEcosystem)
+		currentUnit := (*nextEcosystem)[i][j]
 
-			// get a pointer to the current Unit that we need new values for (nextEcosystem)
-			currentUnit := (*nextEcosystem)[i][j]
+		// this variable keeps track of whether there is more than one thing in the current Unit or not. predator and prey should never stack, but prey/prey-food and predator/prey-food can stack (stack within same Unit)
+		thereIsPred := false
 
-			// this variable keeps track of whether there is more than one thing in the current Unit or not. there should only be either prey or predator or food. never multiple things in the Unit at once
-			thereIsPred := false
+		// Update the currentUnit based on the nextEcosystem! since we want the system to change as things are disappearing (so each prey/predator is competing to get to their respective food source first)
 
-			// Update the currentUnit based on the nextEcosystem! since we want the system to change as prey and food or disappearing (so each prey/predator is competing to get to their respective food source first)
+		// only perform this operation is Unit contains predator
+		if (*currentUnit).predator != nil {
 
-			// only perform this operation is Unit contains predator
-			if (*currentUnit).predator != nil {
-
-				// skip already updated predator.
-				if (*currentUnit).predator.lastGenUpdated != curGen {
-					currentUnit.predator.UpdatePredator(nextEcosystem, i, j, curGen)
-				}
-
-				thereIsPred = true
-
-			}
-			if (*currentUnit).prey != nil { // only perform this operation if Unit contains predator
-
-				// skip already updated prey.
-				if (*currentUnit).prey.lastGenUpdated != curGen {
-					UpdatePrey(nextEcosystem, i, j, curGen)
-				}
-
-				if thereIsPred {
-					panicStatement := "there is a predator and prey in the Unit row, col " + strconv.Itoa(i) + "," + strconv.Itoa(j)
-					panic(panicStatement)
-				}
-
+			// skip already updated predator.
+			if (*currentUnit).predator.lastGenUpdated != curGen {
+				currentUnit.predator.UpdatePredator(nextEcosystem, i, j, curGen)
 			}
 
-			// we allow predator and prey stacking on top of food
-			if !(*currentUnit).food.isPresent { // if we made it here that means there can only be food in the current Unit. skip if the food is already true. note: we don't need to check the lastGenUpdated because food will be false if this is ran.
+			thereIsPred = true
 
-				// determine whether food appears randomly for the prey. GeneratePreyFoodRandomly() will update both fields of the food, if food is generated. otherwise it will leave it false.
-				currentUnit.GeneratePreyFoodProbabilistically(foodRule, i, j, nextEcosystem)
-				// currentUnit.food.lastGenUpdated = curGen
+		}
+		if (*currentUnit).prey != nil { // only perform this operation if Unit contains predator
 
+			// skip already updated prey.
+			if (*currentUnit).prey.lastGenUpdated != curGen {
+				UpdatePrey(nextEcosystem, i, j, curGen)
+			}
+
+			if thereIsPred {
+				panicStatement := "there is a predator and prey in the Unit row, col " + strconv.Itoa(i) + "," + strconv.Itoa(j)
+				panic(panicStatement)
 			}
 
 		}
-	}
 
-	elapsed1 := time.Since(start1)
-	log.Printf("Updating the entire ecosystem took %s", elapsed1)
+		// we allow predator and prey stacking on top of food
+		if !(*currentUnit).food.isPresent { // if we made it here that means there can only be food in the current Unit. skip if the food is already true. note: we don't need to check the lastGenUpdated because food will be false if this is ran.
+
+			// determine whether food appears randomly for the prey. GeneratePreyFoodRandomly() will update both fields of the food, if food is generated. otherwise it will leave it false.
+			currentUnit.GeneratePreyFoodProbabilistically(foodRule, i, j, nextEcosystem)
+			// currentUnit.food.lastGenUpdated = curGen
+
+		}
+
+		k++
+	}
 
 	return nextEcosystem
 }
 
 // Input: the number of rows and number of cols to choose from, numRows and numCols
 // Output: two integers, randomly choosen between for intervals [0,numRows) and [0,numCols)
-func ChooseRandomIndices(numRows, numCols int) (int, int) {
-	chosenRow := rand.Intn(numRows)
-	chosenCol := rand.Intn(numCols)
+func ChooseRandomIndices(numChoices int) int {
+	chosenOrderedPair := rand.Intn(numChoices)
 
-	return chosenRow, chosenCol
+	return chosenOrderedPair
 }
 
 // Input: an Ecosystem pointer
-// Output: a 2D array containing every combination of row and col (all the indices of that Ecosystem)
-func MakeIndicesArray(someEcosystem *Ecosystem) [][]OrderedPair {
+// Output: a 1D array containing every combination of row and col (all the indices of that Ecosystem) as an OrderedPair
+// https://go.dev/play/p/k3_wRjPRuzH
+func MakeIndicesArray(someEcosystem *Ecosystem) []OrderedPair {
 
 	// get the number of rows and cols in the ecosystem
 	numRows := someEcosystem.CountRows()
 	numCols := someEcosystem.CountCols()
 
 	// initialize the arrays to contain all the rows and column indices in the ecosystem
-	arrayOfIndices := make([][]OrderedPair, numRows)
+	arrayOfIndices := make([]OrderedPair, numRows*numCols)
 
+	index := 0
 	// range over all the arrayOfIndices and set equal to the index
-	for i := range arrayOfIndices {
-		arrayOfIndices[i] = make([]OrderedPair, numCols)
-		for j := range arrayOfIndices[i] {
-			arrayOfIndices[i][j].row = i
-			arrayOfIndices[i][j].col = j
+	for i := 0; i < numRows; i++ {
+		// assign all the OrderedPair into the array
+		for j := 0; j < numCols; j++ {
+			arrayOfIndices[index].row = i
+			arrayOfIndices[index].col = j
+			index += 1
 		}
 	}
+
 	return arrayOfIndices
 }
 
 // Input: indicesAvailable, a 2D array of OrderedPair containing the indices available for the ecosystem to choose. dont confuse the indices of this array, with the indices available!
 // Output: none! operates on a pointer to makes updated indicesAvailable
-func UpdateIndices(indicesAvailable *[][]OrderedPair, rowIndex, colIndex int) {
-	// set the index values at that location to -1, -1 so that we know we've visited that location already
-	(*indicesAvailable)[rowIndex][colIndex].row = -1
-	(*indicesAvailable)[rowIndex][colIndex].col = -1
+func UpdateIndices(indicesAvailable []OrderedPair, chosenOrderedPair int) []OrderedPair {
+	// delete the chosen location from the array of indices available.
+	indicesAvailable = append((indicesAvailable)[:chosenOrderedPair], (indicesAvailable)[chosenOrderedPair+1:]...)
+
+	return indicesAvailable
 }
 
 // assumes rectangular Ecosystem (rows all the same length)
