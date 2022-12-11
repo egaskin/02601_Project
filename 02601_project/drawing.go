@@ -26,7 +26,9 @@ func AnimateSystem(allEcosystems []*Ecosystem, canvasWidth, frequency int, scali
 			images = append(images, allEcosystems[i].DrawToCanvas(canvasWidth, scalingFactor))
 			// print status of image drawing
 
-			fmt.Println("Drawing is", 100*float64(i)/float64(numberImages), "percent complete")
+			if i%10 == 0 {
+				fmt.Println("Drawing is", 100*float64(i)/float64(numberImages), "percent complete")
+			}
 
 		}
 

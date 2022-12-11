@@ -5,7 +5,6 @@ import (
 	"gifhelper"
 	"log"
 	"math/rand"
-	"strconv"
 	"time"
 )
 
@@ -15,12 +14,17 @@ import (
 var deltas map[int]OrderedPair
 var energyCosts map[int]int
 var maxEnergy int = 1500
-var energyThresholdPrey int = 1
-var ageThresholdPrey int = 0
+var energyThresholdPrey int = 50
+var ageThresholdPrey int = 21
 var costOfLivingPrey int = 0
-var energyThresholdPredator int = 1 // 800
-var ageThresholdPredator int = 0    // 50
+var energyGainedPerPlankton int = 50
+var energyThresholdPredator int = 100 // 800
+var ageThresholdPredator int = 42     // 50
 var costOfLivingPredator int = 0
+
+// DON'T MESS WITH THIS. SET THEM IN MAIN
+var numPrey int = 0
+var numPred int = 0
 
 func main() {
 
@@ -49,12 +53,16 @@ func main() {
 
 	// var numRows int = 250
 	// var numCols int = 250
-	var numRows int = 100
-	var numCols int = 100
-	var numPrey int = 5
-	var numPred int = 5
+	var numRows int = 150
+	var numCols int = 150
+	numPrey = 10000
+	numPred = 200
+
+	if (numRows * numCols) < (numPrey * numPred) {
+		panic("there's too many predator and prey in total")
+	}
 	var initialEcosystem Ecosystem = InitializeEcosystem(numRows, numCols, numPrey, numPred)
-	var totalTimesteps int = 10
+	var totalTimesteps int = 1000
 	var foodRule string = "gardenOfEden"
 
 	// seed the PRNG approximately randomly
@@ -95,7 +103,7 @@ func PrintEcosystem(someEcosystem *Ecosystem) {
 				// fmt.Println("i,j are ", i, j, " = prey")
 				countPrey += 1
 				if checkIfTwo {
-					panic("there are predator and prey in same cell")
+					// panic("there are predator and prey in same cell")
 				}
 			}
 		}
@@ -130,6 +138,7 @@ func InitializeEcosystem(numRows, numCols, numPrey, numPred int) Ecosystem {
 
 // SimulateEcosystemEvolution() takes an Ecosystem pointer initialEcosystem, int totalTimesteps, and string foodRule. The function sequentially simulates initialEcosystem evolving over the course of totalTimesteps generations and saves each Ecosystem into a collection for the output, a slice of Ecosystem pointers called allEcosystems.
 func SimulateEcosystemEvolution(initialEcosystem *Ecosystem, totalTimesteps int, foodRule string) []*Ecosystem {
+	fmt.Println("SimulateEcosystemEvolution is running")
 
 	// initialize the slice to contain all the Ecosystems
 	allEcosystems := make([]*Ecosystem, totalTimesteps+1)
@@ -191,7 +200,9 @@ func UpdateEcosystem(prevEcosystem *Ecosystem, foodRule string, curGen int) *Eco
 
 			// skip already updated predator.
 			if (*currentUnit).predator.lastGenUpdated != curGen {
+				// fmt.Println("UpdatePredator is called")
 				currentUnit.predator.UpdatePredator(nextEcosystem, i, j, curGen)
+				// fmt.Println("UpdatePredator finished")
 			}
 
 			thereIsPred = true
@@ -201,12 +212,14 @@ func UpdateEcosystem(prevEcosystem *Ecosystem, foodRule string, curGen int) *Eco
 
 			// skip already updated prey.
 			if (*currentUnit).prey.lastGenUpdated != curGen {
+				// fmt.Println("UpdatePrey is called")
 				UpdatePrey(nextEcosystem, i, j, curGen)
+				// fmt.Println("UpdatePrey is called")
 			}
 
 			if thereIsPred {
-				panicStatement := "there is a predator and prey in the Unit row, col " + strconv.Itoa(i) + "," + strconv.Itoa(j)
-				panic(panicStatement)
+				// panicStatement := "there is a predator and prey in the Unit row, col " + strconv.Itoa(i) + "," + strconv.Itoa(j)
+				// panic(panicStatement)
 			}
 
 		}

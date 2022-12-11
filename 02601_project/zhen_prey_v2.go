@@ -36,16 +36,6 @@ func MovePrey(currentEcosystem *Ecosystem, i, j int) {
 
 	deltaX, deltaY, newDirection, geneIndex, newI, newJ := UseGenomeToMovePrey(currentEcosystem, currentPrey, i, j)
 
-	// check if the prey eats
-	//if (*currentEcosystem)[i+deltaX][j+deltaY].food.isPresent == true {
-	// if CheckIfEats((*currentEcosystem)[i+deltaX][j+deltaY], currentPrey) {
-	// 	currentPrey.FeedOrganism((*currentEcosystem)[i+deltaX][j+deltaY])
-	// }
-
-	if CheckIfEats((*currentEcosystem)[newI][newJ], currentPrey) {
-		currentPrey.FeedOrganism((*currentEcosystem)[newI][newJ])
-	}
-
 	// energy decreases based on how drastic the change in direction is for the movement
 	// if at least one of deltaX or deltaY is not equal to 0, we move the prey
 	isMoving := deltaX != 0 || deltaY != 0
@@ -58,18 +48,15 @@ func MovePrey(currentEcosystem *Ecosystem, i, j int) {
 	if currentPrey.energy > 0 {
 
 		// when deltaX and deltaY == 0, currentPrey stay at unit [i, j]
-		// (*currentEcosystem)[i+deltaX][j+deltaY].prey = currentPrey
 		(*currentEcosystem)[newI][newJ].prey = currentPrey
-		// fmt.Println(deltaX, deltaY)
 
 		// comes after moving the prey
 		currentPrey.lastDirection = newDirection
 
-		// // if the current Unit doesnt change, then we don't need to delete the prey from this unit, since we didn't move prey out of it.
-		// if deltaX != 0 && deltaY != 0 {
-		// 	currentUnit.prey = nil
-		// }
+	}
 
+	if CheckIfEats((*currentEcosystem)[newI][newJ], currentPrey) {
+		currentPrey.FeedOrganism((*currentEcosystem)[newI][newJ])
 	}
 }
 
@@ -79,7 +66,7 @@ func CheckIfEats(currentUnit *Unit, currentPrey *Prey) bool {
 
 func (currentPrey Prey) FeedOrganism(currentUnit *Unit) {
 	currentUnit.food.isPresent = false
-	currentPrey.energy += 1
+	currentPrey.energy += energyGainedPerPlankton
 }
 
 // cannot move to unit where there's shark (predator)
@@ -132,6 +119,7 @@ func (currentPrey *Prey) DecreaseEnergy(geneIndex int, isMoving bool) {
 	if isMoving {
 		currentPrey.energy -= energyCosts[geneIndex]
 	}
+
 }
 
 // check if unit (i, j) is unoccupied by a predator or another prey

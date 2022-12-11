@@ -32,6 +32,8 @@ import (
 func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j, curGen int) {
 	// note we have moved the shark this timestep/generation
 	shark.lastGenUpdated = curGen
+	numRows := len(*currEco)
+	numCols := len((*currEco)[0])
 
 	if shark.Organism.energy <= 0 {
 		(*currEco)[i][j].predator = nil
@@ -71,7 +73,9 @@ func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j, curGen int) {
 			if len(freeUnits) != 0 {
 				var babyShark Predator
 				deltaX, deltaY := pickUnit(&freeUnits)
-				(*currEco)[i+deltaX][j+deltaY].predator = &babyShark
+				newI := GetIndex(i, deltaX, numRows)
+				newJ := GetIndex(j, deltaY, numCols)
+				(*currEco)[newI][newJ].predator = &babyShark
 				shark.Reproduce(&babyShark)
 
 			}
@@ -157,22 +161,22 @@ func GetAvailableUnits(currEco *Ecosystem, r, c int) []int {
 		for j := c - 1; j <= c+1; j++ {
 			j_updated := -1
 			if j < 0 {
-				j_updated = len(*currEco) - 1
+				j_updated = len((*currEco)[0]) - 1
 			}
-			if j == len(*currEco) {
+			if j == len((*currEco)[0]) {
 				j_updated = 0
 			}
 
-			if IsItAvailable((*currEco)[i][j], true) {
+			// j_updated didn't change, it should be j still
+			if j_updated == -1 {
+				j_updated = j
+			}
 
-				// j_updated didn't change, it should be j still
-				if j_updated == -1 {
-					j_updated = j
-				}
+			if i_updated == -1 {
+				i_updated = i
+			}
 
-				if i_updated == -1 {
-					i_updated = i
-				}
+			if IsItAvailable((*currEco)[i_updated][j_updated], true) {
 
 				// fmt.Println("We saw this")
 				n = GetUnit(r, c, i_updated, j_updated, len(*currEco))

@@ -1,13 +1,15 @@
 package main
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
-//UpdateAge takes in a pointer to a prey object, updates it age by incrementing it by one and then returns it.
+// UpdateAge takes in a pointer to a prey object, updates it age by incrementing it by one and then returns it.
 func UpdateAgePrey(p *Prey) {
 	p.Organism.age += 1
 }
 
-//UpdateAge takes in a pointer to a prey object, updates it age by incrementing it by one and then returns it.
+// UpdateAge takes in a pointer to a prey object, updates it age by incrementing it by one and then returns it.
 func UpdateAgePredator(p *Predator) {
 	p.Organism.age += 1
 }
@@ -22,7 +24,7 @@ func ReproducePrey(parent, child *Prey) {
 	UpdateGenome(&child.Organism)
 }
 
-//UpdateDirection updates the direction of that the child is moving in based on the parents genome and direction of movement
+// UpdateDirection updates the direction of that the child is moving in based on the parents genome and direction of movement
 func UpdateDirection(parent, child *Organism) {
 	r := rand.Float64()
 	var sum Gene
@@ -38,7 +40,7 @@ func UpdateDirection(parent, child *Organism) {
 	child.lastDirection = (parent.lastDirection + index) % 8
 }
 
-//UpdateGenome updates the genome of the child based on the last known movement.
+// UpdateGenome updates the genome of the child based on the last known movement.
 func UpdateGenome(currentOrganism *Organism) {
 	currentDirection := currentOrganism.lastDirection
 	delta := 0.1
@@ -57,7 +59,7 @@ func ReproducePredator(p *Predator) *Predator {
 	var child Predator
 	p.Organism.age = 0
 	child.Organism.energy = p.Organism.energy / 2
-	p.Organism.energy /= 2
+	//p.Organism.energy /= 2
 	child.Organism.genome = p.Organism.genome // Check if the array needs to be copied manually.
 	UpdateDirection(&p.Organism, &child.Organism)
 	UpdateGenome(&child.Organism)
@@ -77,15 +79,20 @@ func UpdatePrey(currentEcosystem *Ecosystem, i, j, currGen int) {
 	}
 
 	UpdateAgePrey(currentPrey)
+
 	if (*currentEcosystem)[i][j].prey.energy >= energyThresholdPrey && (*currentEcosystem)[i][j].prey.age >= ageThresholdPrey {
 		var babyPrey Prey
+		// fmt.Println("getting units")
 		freeUnits := GetAvailableUnits(currentEcosystem, i, j)
+		// fmt.Println(" units got")
 		if len(freeUnits) != 0 {
+			// fmt.Println("reproducing")
 			deltaX, deltaY := pickUnit(&freeUnits)
 			newI := GetIndex(i, deltaX, numRows)
 			newJ := GetIndex(j, deltaY, numCols)
 			(*currentEcosystem)[newI][newJ].prey = &babyPrey
 			ReproducePrey(currentPrey, &babyPrey)
+			// fmt.Println("u had a baby at", newI, newJ)
 		}
 
 	}
@@ -159,7 +166,7 @@ func InitializePreyAndPredator(numRows, numCols, numPrey, numPred int, newEco *E
 func CreatePrey() *Prey {
 	var newPrey Prey
 	newPrey.Organism.age = 0
-	newPrey.Organism.energy = 5
+	newPrey.Organism.energy = 50
 	newPrey.Organism.age = 0
 	newPrey.Organism.genome = CreateGenome()
 	newPrey.Organism.lastGenUpdated = 0
@@ -171,7 +178,7 @@ func CreatePrey() *Prey {
 func CreatePredator() *Predator {
 	var newPredator Predator
 	newPredator.Organism.age = 0
-	newPredator.Organism.energy = 5
+	newPredator.Organism.energy = 50
 	newPredator.Organism.age = 0
 	newPredator.Organism.genome = CreateGenome()
 	newPredator.Organism.lastGenUpdated = 0
