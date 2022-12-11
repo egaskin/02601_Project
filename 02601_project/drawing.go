@@ -24,13 +24,12 @@ func AnimateSystem(allEcosystems []*Ecosystem, canvasWidth, frequency int, scali
 		if i%frequency == 0 {
 			// fmt.Println(i)
 			images = append(images, allEcosystems[i].DrawToCanvas(canvasWidth, scalingFactor))
+			// print status of image drawing
+
+			fmt.Println("Drawing is", 100*float64(i)/float64(numberImages), "percent complete")
+
 		}
-		// print status of image drawing
-		if (numberImages / 10) != 0 {
-			if i%(numberImages/10) == 0 {
-				fmt.Println("Drawing is", 100*float64(i)/float64(numberImages), "percent complete")
-			}
-		}
+
 	}
 
 	return images
@@ -54,14 +53,14 @@ func (eco *Ecosystem) DrawToCanvas(canvasWidth int, scalingFactor float64) image
 	// c := canvas.CreateNewCanvas(canvasWidth, canvasWidth)
 	c := canvas.CreateNewCanvas(numRows*unitWidth, numCols*unitWidth)
 
-	// create a black background
-	c.SetFillColor(canvas.MakeColor(0, 0, 0))
+	// create a white background
+	c.SetFillColor(canvas.MakeColor(255, 255, 255))
 	c.ClearRect(0, 0, canvasWidth, canvasWidth)
 	c.Fill()
 
 	// colors for each unit type
 	var food_red uint8 = 0
-	var food_green uint8 = 150
+	var food_green uint8 = 255
 	var food_blue uint8 = 0
 	foodColor := canvas.MakeColor(food_red, food_green, food_blue)
 
