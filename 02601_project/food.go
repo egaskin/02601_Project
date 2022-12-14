@@ -20,7 +20,7 @@ func (someUnit *Unit) GeneratePreyFoodProbabilistically(foodRule string, row, co
 	} else if foodRule == "even" {
 		// someUnit.GenerateRandom(row, col, numRows, numCols, generator)
 	} else if foodRule == "lineRunner" {
-		// someUnit.GenerateLineRunner(row, col, numRows, numCols, generator)
+		someUnit.GenerateLineRunner(row, col, numRows, numCols, generator)
 	} else {
 		panic("invalid foodRule string inputted. should be eden, random, or lineRunner!")
 	}
@@ -70,4 +70,39 @@ func CheckIsInCenter(row, col, centerRow, centerCol, halfCenterRecLength, halfCe
 
 	// we are not within the center, return false
 	return false
+}
+
+// GenerateLineRunner: Method that sets
+func (someUnit *Unit) GenerateLineRunner(row, col, numRows, numCols int, generator *rand.Rand) {
+	// generate a random floating point value on half open interval [0,1), with the unique generator
+	probability := generator.Float64() // this is instead of rand.Float64() accessing the global random PRNG object
+	gridRow := numRows / 4
+	gridCol := numCols / 4
+
+	// check if the row and col of the current unit is within the center rectangle
+	if CheckIsOnGridLine(&row, &col, &gridRow, &gridCol) {
+		// if on the grid line then much higher likelihood of generating food
+		if probability >= 0.95 {
+			someUnit.food.isPresent = true
+		}
+	} else {
+		// if not within the center rectangle then much less likely to generate food
+		if probability >= 0.99999 {
+			someUnit.food.isPresent = true
+		}
+	}
+}
+
+func CheckIsOnGridLine(row, col, gridRow, gridCol *int) bool {
+	if *row == 0 || *col == 0 {
+		return false
+	}
+	if *row%*gridRow == 0 {
+		return true
+	}
+	if *col%*gridCol == 0 {
+		return true
+	}
+	return false
+
 }
