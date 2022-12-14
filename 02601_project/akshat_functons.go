@@ -43,8 +43,7 @@ func UpdateDirection(parent, child *Organism) {
 // UpdateGenome updates the genome of the child based on the last known movement.
 func UpdateGenome(currentOrganism *Organism) {
 	currentDirection := currentOrganism.lastDirection
-	delta := 0.1
-	currentOrganism.genome[currentDirection] += Gene(delta) * currentOrganism.genome[currentDirection]
+	delta := 0.8
 	for i := range currentOrganism.genome {
 		if i != currentDirection {
 			if currentOrganism.genome[i]-Gene(delta)*currentOrganism.genome[currentDirection] > 0 {
@@ -52,14 +51,24 @@ func UpdateGenome(currentOrganism *Organism) {
 			}
 		}
 	}
+	currentOrganism.genome[currentDirection] += Gene(delta) * currentOrganism.genome[currentDirection]
+	CheckGenome(currentOrganism.genome)
 }
+func CheckGenome(currentGenome [8]Gene) {
+	sum := Gene(0.0)
+	for i := range currentGenome {
+		sum += currentGenome[i]
+	}
+	//fmt.Println("The current genome is", currentGenome)
+	//fmt.Println("The total length of the genome is ", sum)
 
+}
 func ReproducePredator(p *Predator) *Predator {
 	//This function will only be called if the age and energy and requirements are met. Check these requirements before calling this function.
 	var child Predator
 	p.Organism.age = 0
 	child.Organism.energy = p.Organism.energy / 2
-	//p.Organism.energy /= 2
+	p.Organism.energy /= 2
 	child.Organism.genome = p.Organism.genome // Check if the array needs to be copied manually.
 	UpdateDirection(&p.Organism, &child.Organism)
 	UpdateGenome(&child.Organism)
@@ -148,8 +157,9 @@ func InitializePreyAndPredator(numRows, numCols, numPrey, numPred int, newEco *E
 		j := rand.Intn(numCols)
 		if (*newEco)[i][j].predator == nil {
 			(*newEco)[i][j].predator = CreatePredator()
+			count_Pred += 1
 		}
-		count_Pred += 1
+
 	}
 
 	for count_Prey < numPrey {
