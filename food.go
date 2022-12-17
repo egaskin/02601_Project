@@ -18,11 +18,20 @@ func (someUnit *Unit) GeneratePreyFoodProbabilistically(foodRule string, row, co
 	if foodRule == "gardenOfEden" {
 		someUnit.GenerateEden(row, col, numRows, numCols, generator)
 	} else if foodRule == "even" {
-		// someUnit.GenerateRandom(row, col, numRows, numCols, generator)
+		someUnit.GenerateRandom(row, col, numRows, numCols, generator)
 	} else if foodRule == "lineRunner" {
 		someUnit.GenerateLineRunner(row, col, numRows, numCols, generator)
 	} else {
 		panic("invalid foodRule string inputted. should be eden, random, or lineRunner!")
+	}
+}
+
+func (someUnit *Unit) GenerateRandom(row, col, numRows, numCols int, generator *rand.Rand) {
+	// generate a random floating point value on half open interval [0,1), with the unique generator
+	probability := generator.Float64() // this is instead of rand.Float64() accessing the global random PRNG object
+	// if meets the probability, randomly make food.
+	if probability >= 0.999 {
+		someUnit.food.isPresent = true
 	}
 }
 

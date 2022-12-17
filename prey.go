@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"math/rand"
 )
 
@@ -92,8 +93,8 @@ func UseGenomeToMovePrey(currentEcosystem *Ecosystem, currentPrey *Prey, i, j in
 		}
 		newDirection := (currentPrey.lastDirection + geneIndex) % 8
 		moveDeltas = deltas[newDirection]
-		numRows := len(*currentEcosystem)
-		numCols := len((*currentEcosystem)[0])
+		numRows := currentEcosystem.CountRows()
+		numCols := currentEcosystem.CountCols()
 		newI = GetIndex(i, moveDeltas.row, numRows)
 		newJ = GetIndex(j, moveDeltas.col, numCols)
 
@@ -194,14 +195,23 @@ func UpdateGenome(currentOrganism *Organism) {
 	currentOrganism.genome[currentDirection] += Gene(delta) * currentOrganism.genome[currentDirection]
 	CheckGenome(currentOrganism.genome)
 }
-func CheckGenome(currentGenome [8]Gene) {
+
+// CheckGenome checks that we have not exceeded 1 by summing the genes for a given input genome
+func CheckGenome(currentGenome [8]Gene) bool {
 	sum := Gene(0.0)
 	for i := range currentGenome {
 		sum += currentGenome[i]
 	}
-	//fmt.Println("The current genome is", currentGenome)
-	//fmt.Println("The total length of the genome is ", sum)
 
+	result := true
+
+	// if the sum minus 1 rounded to nearest integer is less than 0, that would mean that the sum is under 0.5
+	// if the sum plus 1 rounded to the nearest integer is greater than or equal to 1, than means sum is over 1.5
+	if math.Round(float64(sum))-1 < 0 || math.Round(float64(sum))+1 >= 1 {
+		result = false
+	}
+
+	return result
 }
 func ReproducePredator(p *Predator) *Predator {
 	//This function will only be called if the age and energy and requirements are met. Check these requirements before calling this function.
@@ -216,8 +226,8 @@ func ReproducePredator(p *Predator) *Predator {
 }
 
 func UpdatePrey(currentEcosystem *Ecosystem, i, j, currGen int) {
-	numRows := len(*currentEcosystem)
-	numCols := len((*currentEcosystem)[0])
+	numRows := currentEcosystem.CountRows()
+	numCols := currentEcosystem.CountCols()
 	currentPrey := (*currentEcosystem)[i][j].prey
 	// note we have moved the prey this timestep/generation
 	currentPrey.lastGenUpdated = currGen
@@ -231,17 +241,15 @@ func UpdatePrey(currentEcosystem *Ecosystem, i, j, currGen int) {
 
 	if (*currentEcosystem)[i][j].prey.energy >= energyThresholdPrey && (*currentEcosystem)[i][j].prey.age >= ageThresholdPrey {
 		var babyPrey Prey
-		// fmt.Println("getting units")
+
 		freeUnits := GetAvailableUnits(currentEcosystem, i, j)
-		// fmt.Println(" units got")
+
 		if len(freeUnits) != 0 {
-			// fmt.Println("reproducing")
 			deltaX, deltaY := pickUnit(&freeUnits)
 			newI := GetIndex(i, deltaX, numRows)
 			newJ := GetIndex(j, deltaY, numCols)
 			(*currentEcosystem)[newI][newJ].prey = &babyPrey
 			ReproducePrey(currentPrey, &babyPrey)
-			// fmt.Println("u had a baby at", newI, newJ)
 		}
 
 	}

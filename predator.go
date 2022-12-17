@@ -4,36 +4,12 @@ import (
 	"math/rand"
 )
 
-// Set a constant dictionary where keys are the directionIndex and the values are the orderedPair with corresponding deltaX and deltaY
-// movementDeltas := map[int]OrderedPair {
-// 	0: OrderedPair{-1, -1},
-// 	1: OrderedPair{0, -1},
-// 	2: OrderedPair{1, -1},
-// 	3: OrderedPair{1, 0},
-// 	4: OrderedPair{1, 1},
-// 	5: OrderedPair{0, 1},
-// 	6: OrderedPair{-1, 1},
-// 	7: OrderedPair{-1, 0},
-// }
-
-// Gene index to energy cost
-// energyCosts := map[int]int {
-// 	0: 0,
-// 	1: -1,
-// 	2: -2,
-// 	3: -4,
-// 	4: -8,
-// 	5: -4,
-// 	6: -2,
-// 	7: -1,
-// }
-
 // UpdatePredator is a Predator method which will take a Predator input and update the position, initiate eating, reproduction, and age accordingly
 func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j, curGen int) {
 	// note we have moved the shark this timestep/generation
 	shark.lastGenUpdated = curGen
-	numRows := len(*currEco)
-	numCols := len((*currEco)[0])
+	numRows := currEco.CountRows()
+	numCols := currEco.CountCols()
 
 	if shark.Organism.energy <= 0 {
 		(*currEco)[i][j].predator = nil
@@ -65,8 +41,6 @@ func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j, curGen int) {
 		isMoving := deltaRow != 0 || deltaCol != 0
 		shark.DecreaseEnergy(geneIndex, isMoving)
 
-		// (*currEco)[i][j].predator = nil
-
 		if shark.energy > 0 {
 			(*currEco)[newR][newC].predator = shark
 			(*currEco)[newR][newC].predator.lastDirection = newDirection
@@ -83,12 +57,11 @@ func (shark *Predator) UpdatePredator(currEco *Ecosystem, i, j, curGen int) {
 	}
 }
 
-// UseGenomeToMovePredator()
+// UseGenomeToMovePredator() uses the genome to decide the next location of the organism in a probabilistic manner
 func (shark *Predator) UseGenomeToMove(currentEcosystem *Ecosystem, i, j int) (int, int, int, int, int, int) {
 	var moveDeltas OrderedPair
 	var geneIndex, newDirection, newI, newJ int
 	currentPredator := (*currentEcosystem)[i][j].predator
-	// isFreeUnitFlag := false
 	numTries := 0
 
 	// 20 is the threshold for max number of tries we get to reselect a gene for movement
@@ -107,13 +80,12 @@ func (shark *Predator) UseGenomeToMove(currentEcosystem *Ecosystem, i, j int) (i
 		}
 		newDirection := (shark.lastDirection + geneIndex) % 8
 		moveDeltas = deltas[newDirection]
-		numRows := len(*currentEcosystem)
-		numCols := len((*currentEcosystem)[0])
+		numRows := currentEcosystem.CountRows()
+		numCols := currentEcosystem.CountCols()
 		newI = GetIndex(i, moveDeltas.row, numRows)
 		newJ = GetIndex(j, moveDeltas.col, numCols)
 
-		//This check if the unit is free or not
-		// isFreeUnitFlag = isFreeUnit(currentEcosystem, i, j)
+		// This check if the unit is free or not
 		numTries += 1
 	}
 	// if numTries >= 20 and still haven't find a free unit, we don't move
@@ -176,11 +148,8 @@ func GetAvailableUnits(currEco *Ecosystem, r, c int) []int {
 			}
 
 			if IsItAvailable((*currEco)[i_updated][j_updated], true) {
-
-				// fmt.Println("We saw this")
 				n = GetUnit(r, c, i_updated, j_updated, len(*currEco))
 				units = append(units, n)
-				// fmt.Println("We finished this")
 			}
 
 		}
@@ -196,7 +165,6 @@ func (shark *Predator) Reproduce(babyShark *Predator) {
 	babyShark.Organism.genome = shark.Organism.genome // Check if the array needs to be copied manually.
 	UpdateDirection(&shark.Organism, &babyShark.Organism)
 	UpdateGenome(&babyShark.Organism)
-
 }
 
 func (shark *Predator) CheckAge(threshold int) bool {

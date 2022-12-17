@@ -22,6 +22,7 @@ var ageThresholdPredator int = 42     // 50
 var costOfLivingPredator int = 0
 
 // DON'T MESS WITH THIS. SET THEM IN MAIN
+// we will use these to track numPrey and numPred globally
 var numPrey int = 0
 var numPred int = 0
 
@@ -54,14 +55,14 @@ func main() {
 	// var numCols int = 250
 	var numRows int = 50
 	var numCols int = 50
-	numPrey = 1000
+	numPrey = 10
 	numPred = 50
 
 	if (numRows * numCols) < (numPrey + numPred) {
 		panic("there's too many predator and prey in total")
 	}
 	var initialEcosystem Ecosystem = InitializeEcosystem(numRows, numCols, numPrey, numPred)
-	var totalTimesteps int = 1000
+	var totalTimesteps int = 10
 	var foodRule string = "gardenOfEden"
 
 	// seed the PRNG approximately randomly
@@ -76,7 +77,8 @@ func main() {
 	gifhelper.ImagesToGIF(imageList, "ecosystem")
 	fmt.Println("GIF drawn.")
 
-	PrintEcosystem(allEcosystems[len(allEcosystems)-1])
+	// use this for debugging and seeing characteristics of specific ecosystem(s)
+	// PrintEcosystem(allEcosystems[len(allEcosystems)-1])
 
 }
 

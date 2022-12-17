@@ -20,9 +20,7 @@ func SimulateEcosystemEvolution(initialEcosystem *Ecosystem, totalTimesteps int,
 	// sequentially update allEcosystems (serially) and save them
 	for i := 1; i <= totalTimesteps; i++ {
 
-		// fmt.Println("gen being created =", i)
 		allEcosystems[i] = UpdateEcosystem(allEcosystems[i-1], foodRule, i)
-		// fmt.Println("gen being is made =", i)
 
 		// print status of simulation
 		if (totalTimesteps / 10) != 0 {
@@ -63,37 +61,21 @@ func UpdateEcosystem(prevEcosystem *Ecosystem, foodRule string, curGen int) *Eco
 		// get a pointer to the current Unit that we need new values for (nextEcosystem)
 		currentUnit := (*nextEcosystem)[i][j]
 
-		// this variable keeps track of whether there is more than one thing in the current Unit or not. predator and prey should never stack, but prey/prey-food and predator/prey-food can stack (stack within same Unit)
-		thereIsPred := false
-
 		// Update the currentUnit based on the nextEcosystem! since we want the system to change as things are disappearing (so each prey/predator is competing to get to their respective food source first)
-
 		// only perform this operation is Unit contains predator
 		if (*currentUnit).predator != nil {
 
 			// skip already updated predator.
 			if (*currentUnit).predator.lastGenUpdated != curGen {
-				// fmt.Println("UpdatePredator is called")
 				currentUnit.predator.UpdatePredator(nextEcosystem, i, j, curGen)
-				// fmt.Println("UpdatePredator finished")
 			}
 
-			thereIsPred = true
-
 		}
-		if (*currentUnit).prey != nil { // only perform this operation if Unit contains predator
+		if (*currentUnit).prey != nil { // only perform this operation if Unit contains prey
 
 			// skip already updated prey.
 			if (*currentUnit).prey.lastGenUpdated != curGen {
-				// fmt.Println("UpdatePrey is called")
 				UpdatePrey(nextEcosystem, i, j, curGen)
-				// fmt.Println("UpdatePrey is called")
-			}
-
-			if thereIsPred {
-				// panicStatement := "there is a predator and prey in the Unit row, col " + strconv.Itoa(i) + "," + strconv.Itoa(j)
-				// fmt.Println(panicStatement)
-				// panic(panicStatement)
 			}
 
 		}

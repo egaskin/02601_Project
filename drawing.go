@@ -4,6 +4,7 @@ import (
 	"canvas"
 	"fmt"
 	"image"
+	"math"
 )
 
 // AnimateSystem takes a slice pointers to Ecosystem objects along with a canvas width
@@ -22,14 +23,14 @@ func AnimateSystem(allEcosystems []*Ecosystem, canvasWidth, frequency int, scali
 	// for every universe, draw to canvas and grab the image
 	for i := range allEcosystems {
 		if i%frequency == 0 {
-			// fmt.Println(i)
 			images = append(images, allEcosystems[i].DrawToCanvas(canvasWidth, scalingFactor))
-			// print status of image drawing
+		}
 
-			if i%10 == 0 {
-				fmt.Println("Drawing is", 100*float64(i)/float64(numberImages), "percent complete")
-			}
-
+		// print status of image drawing
+		if i%(numberImages/10) == 0 || i == 0 {
+			number := float64(i) / float64(numberImages)
+			number = math.Round(number * 100)
+			fmt.Println("Drawing is", number, "percent complete")
 		}
 
 	}
@@ -83,7 +84,6 @@ func (eco *Ecosystem) DrawToCanvas(canvasWidth int, scalingFactor float64) image
 
 			//food can be present at the same time as shark or prey
 			if curUnit.food.isPresent {
-				// fmt.Println("this ran")
 				c.SetFillColor(foodColor)
 				x := j * unitWidth
 				y := i * unitWidth
