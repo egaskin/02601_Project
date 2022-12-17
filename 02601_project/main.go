@@ -58,7 +58,7 @@ func main() {
 	numPrey = 10000
 	numPred = 200
 
-	if (numRows * numCols) < (numPrey * numPred) {
+	if (numRows * numCols) < (numPrey + numPred) {
 		panic("there's too many predator and prey in total")
 	}
 	var initialEcosystem Ecosystem = InitializeEcosystem(numRows, numCols, numPrey, numPred)
